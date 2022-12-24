@@ -1,1 +1,3 @@
-https://colab.research.google.com/drive/1OJPnCVz51zampZyWqOYpRambrDB2h50P?usp=share_link
+1. Spatial Filtering cv2: https://colab.research.google.com/drive/1OJPnCVz51zampZyWqOYpRambrDB2h50P?usp=share_link
+2. Tuto1: https://colab.research.google.com/drive/19XKrlUKfAlfoLetxb0pq1JdsFbd221no
+3. Tuto2: https://colab.research.google.com/drive/1qgijee2dDAFbMEP69cu3Pa8o07R7T9mR#scrollTo=NMXXL6CJ3pHv

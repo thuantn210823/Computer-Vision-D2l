@@ -1,0 +1,101 @@
+\documentclass{article}
+\usepackage[utf8]{vietnam}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\title{Lab Tutorials}
+\author{Ngọc Thuận - IPSAL LAB}
+\date{24, December 2022}
+\begin{document}
+\maketitle
+\begin{abstract}
+    Đây là những ghi chú, lưu ý của tôi trong quá trình làm Lab-Tutorials, mục đích là để ghi lại những ý chính nhất, phục vụ cho việc nghiên cứu sau này!
+\end{abstract}
+
+\section{Lec1\_Tuto1\_Lab01\_dataset}
+    Dataset là một trong những đối tượng cơ bản, nhưng vô cùng quan trọng trong Trí tuệ nhân tạo nói chung, và các nhóm lĩnh vực nhỏ hơn của nó nói riêng. Ta đã biết một số Dataset có sẵn được lưu trữ trong các thư viện phổ biến như: MNIST, Iris, CIFAR, ... Tuy nhiên thực tế lại không xoay quanh những dữ liệu có sẵn, bài này sẽ giới thiệu về cách sử dụng các cơ sở dữ liệu có sẵn và cách để tự tạo một cơ sở dử liệu của riêng mình!
+    \subsection{Sử dụng các Dataset của torchvision}
+    Đơn giản nhất ta làm như sau, ví dụ với CIFAR10:\newline \\
+    \fbox{
+    \begin{minipage}{\linewidth}
+    from torchvision.datasets
+    import CIFAR10 \\
+    data\_train = CIFAR10(`../cifar10\_data2', train = True, download = True)
+    \end{minipage}
+    }\\ \\
+    Khi đó, \textit{data\_train} sẽ là tập dữ liệu huấn luyện được \textit{import} từ \textit{torchvision.datasets}. Các \textit{elements} của tập dữ liệu huấn luyện được biểu diễn dưới dạng \textit{tuple}: \textit{(image, label)}.\\
+    Các lệnh hay đối số khác, ngoài ví dụ trên sẽ tự nhiên cứu lại nếu cần thiết.\\
+    Link: \href{https://pytorch.org/vision/stable/datasets.html}{DATASETS - PyTorch}.
+    \subsection{Tự tạo Datasets cho riêng mình, sử dụng ImageFolder Class.}
+    Bỏ qua những râu ria, ta những gì ta có thể tự làm không cần code thì nên chú ý để thực hiện một cách nhanh chóng và hiệu quả.\\
+    Sau khi làm bài này, tôi nhận thấy, để tạo một cơ sở dữ liệu, ta sẽ làm các bước tiền xử lí bên ngoài như sau:
+    \begin{enumerate}
+        \item Đầu tiên tạo một \textit{Folder} riêng cho \textit{Dataset} đó.
+        \item Bên trong tạo các \textit{Folder} con, đó chính là nơi lưu các lớp dữ liệu (\textit{labels}). 
+        \item Cuối cùng là lưu các ảnh vào đúng các lớp tương ứng. 
+    \end{enumerate}
+    \underline{Chú ý}: Không nên lẫn lộn nhiều kiểu dữ liệu, và các tên nên đặt thân thuộc, có chỉ số, để phục vụ cho việc import ảnh.\\ \\
+    Đến đây để có thể biến cơ sở dữ liệu trên giống như các cơ sở dữ liệu có sẵn thì ta sử dụng \textit{ImageFolder}, ví dụ như sau:\\ \\
+    \fbox{
+    \begin{minipage}{\linewidth}
+    data\_train = torchvision.datasets.ImageFolder(data\_tuto1\_root)
+    \end{minipage}
+    }\\ \\
+    Với đối số và \textit{root} của cơ sở dữ liệu vừa tạo. \\
+    Sau đó thì mọi thứ y hệt cơ sở dữ liệu có sẵn rồi!
+    \subsection{Data Loading in Pytorch - DataLoader}
+    Chỗ này tôi chưa hiểu lắm nên không thể ghi lại rõ ràng được.\\
+    Nhưng tôi biết đây là bước tiền xử lí số liệu, chẳng hạn như việc tách tập huấn luyện thành các tập nhỏ, tránh quá khớp chẳng hạn, hay đơn giản là muốn thử nghiệm trên số lượng nhỏ.\\
+    Có thể gộp nhưng tôi sẽ làm tách riêng, để rõ ràng trong cả trường hợp với cơ sở dữ liệu tự tạo. Ví dụ: \\ \\
+    \fbox{\begin{minipage}{\linewidth}
+    data\_train = MNIST('~/mnist\_data', train = True, download = True, transform = transforms.Compose([transforms.ToTensor()])\\
+    data\_train\_batch\_2 = torch.utils.data.DataLoader(data\_train, batch\_size = 200, shuffle = False)
+    \end{minipage}
+    }\\ \\
+    Đến đấy \textit{data\_train\_batch\_2} khá giống bên trên, đều chứa dữ liệu và nhãn. Tuy nhiên để sử dụng phải dùng đến \textit{Variable} của \textit{module} \textit{torch.autograd}. Dù chưa hiểu nhưng ta cứ xem ví dụ sau:\\ \\
+    \fbox{
+    \begin{minipage}{\linewidth}
+    from torch.autograd import Variable\\
+    for i, (images, labels) in enumerate(data\_train\_batch\_2):\\
+    \phantom{for i,}images = Variable(images)\\
+    \phantom{for i,}labels = Variable(labels)
+        
+    \end{minipage}
+    }\\ \\
+    Sau đó thì làm bình thường, tuy nhiên chú ý rẳng một số \textit{Dataset} lưu ảnh xám dưới dạng mảng 3 chiều, đơn kênh. Khi đó chú ý \textit{reshape} ảnh hoặc sử dụng \textit{squeeze method}. 
+\section{Lec1\_Tuto1\_Lab01\_dataset\_custom}
+Với bài này ta hiểu rằng mục đích chính là định dạng các \textit{Dataset} theo ý mình. Tức ta sẽ tạo ra một \textit{class} để làm điều ấy, và \textit{class} ấy tối thiểu cần làm được 3 nhiệm vụ sau:
+\begin{enumerate}
+    \item nhập dữ liệu từ các \textit{Dataset} gốc. (thông qua \textit{root} là chủ yếu).
+    \item có thể truy cập vào ra tập dữ liệu đã được nhập.
+    \item trả lại số lượng của tập dữ liệu.
+\end{enumerate}
+Thật vậy, ứng với nó ta cần tối thiểu 3 hàm lần lượt là: \textit{\_\_init\_\_} (inherits từ \textit{torch.utils.data.Dataset}), \textit{\_\_getitem\_\_(self, idx)} và \textit{\_\_len\_\_}.
+    \subsection{Nhắc lại về Inheration}
+    Các lớp trong \textit{Python} có tính kế thừa nhau nếu ta gán cho chúng các tập bố. Khi đó các tập con sẽ hưởng hết tất cả tính chất, phương thức của hàm bố nếu không có gì thay đổi.\\
+    Để khởi tạo lại cho tập con, buộc phải có dữ liệu dành cho tập bố. Khi đó ta sử dụng \textit{super().\_\_init\_\_(*args, **kwargs)}. Với các hàm và phương thức, nếu thay đổi trên tập con thì khi gọi tập con, kết quả sẽ theo hàm, phương thức được gọi trên tập con.\\
+    Dựa vào hiểu biết này, ta có thể tận dụng lớp \textit{Dataset} có sẵn, xịn sò của \textit{PyTorch} và chỉ cần thay đổi những cái cơ bản như trên thỏa mãn ý của chúng ta là được! Ví dụ: \\ \\
+    \fbox{
+    \begin{minipage}{\linewidth}
+        class ImageDataset\_segment(torch.utils.data.Dataset): \# inheritation.\\
+        \phantom{class} def \_\_init\_\_(self, root, N, *args, **kwargs):\\
+        \phantom{class def }super().\_\_init\_\_(*args, **kwargs)
+    \end{minipage}
+    }
+    \subsection{Các chú ý khác}
+    Bài này, những phần trên ta có thể xem lại nhưng một số cái ta phải nhớ!
+        \subsubsection{Contour cho phân đoạn ảnh}
+        Khá bất ngờ, đơn giản ta chỉ việc vẽ ảnh gốc và ảnh đã phân đoạn chồng lên nhau thôi.
+        \subsubsection{Lưu dữ liệu dưới dạng .npy hay .pt}
+        Cần phải tạo ra các tập dữ liệu để chứa chúng, kênh đầu tiên là số lượng dữ liệu, các kênh sau tùy thuộc vào \textit{numpy} hay \textit{torch} mà xử lí \textit{np.save} hay \textit{torch.save}.
+
+\section{Link Colab}
+\begin{enumerate}
+    \item \href{https://colab.research.google.com/drive/19XKrlUKfAlfoLetxb0pq1JdsFbd221no}{Tuto 1}
+    \item \href{https://colab.research.google.com/drive/1qgijee2dDAFbMEP69cu3Pa8o07R7T9mR#scrollTo=NMXXL6CJ3pHv}{Tuto 2}
+\end{enumerate}
+\end{document}
