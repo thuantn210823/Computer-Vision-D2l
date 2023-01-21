@@ -1,0 +1,3 @@
+Link Tuto Colab:
+Lec2_Lab01_Gaussian: https://colab.research.google.com/drive/1bYTzEGjHl0v9c8VBcfGvlva1C1Wto8WE
+Lec2_lab02_Image_gradient: https://colab.research.google.com/drive/1ToTJQy4vrTzpNNyAUoQM2hJcGbwSRHKr
