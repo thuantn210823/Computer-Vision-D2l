@@ -1,0 +1,21 @@
+Forgive me for this!
+I relized that this tutorials is not mine. So I can just show you my works but can not give you the documents. Here is the links that leads to my google colab! 
+Ps: All files are needed for these task you can find it here!
+
+- week 9-10
+
+Lec3_Lab01_LinearRegression: https://colab.research.google.com/drive/1e1TPe5-Hv9jXx__zcE3O06K8oPiwOTSl?usp=sharing
+
+Lec3_Lab02_LogisticRegression: https://colab.research.google.com/drive/1XlpwtJ47KUKL9KC3vDfDsDyGx56aiSaN#scrollTo=iHgCJV0m6dlh
+
+- week 11-12
+Lec3_Lab03_autograd:
+https://colab.research.google.com/drive/1x5PeCvfymmw4jwdcvrSGDH1HSz88m6c5
+
+- week 13-14
+Lec04_Lab01_simpleNN_mnist: https://colab.research.google.com/drive/1Z0M4U8QdI6xISk_FX_8B6f8hEfwMoaJg
+
+Lec4_Lab02_minibatch_SimpleNN_mnist:
+https://colab.research.google.com/drive/16p5Teu-k85a7K1ua59Os0Cqez9ilUltz
+
+Lec4_Lab03_mlp_mnist: https://colab.research.google.com/drive/1RmRFRMVV-o3e-RvqFGbZ_xiMIo0GJimh
