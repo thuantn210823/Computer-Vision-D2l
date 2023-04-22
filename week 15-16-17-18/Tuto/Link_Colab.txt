@@ -1,0 +1,5 @@
+Lec5_Lab01_lenet5:
+https://colab.research.google.com/drive/1wlR7seEKATkUWQrOq0B-DOKSFaLg7P3D
+
+Lec5_Lab02_vgg:
+https://colab.research.google.com/drive/1Igkyxp155Ucj1P44VfppvEOY3av1fyl3
