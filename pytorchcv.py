@@ -6,14 +6,20 @@ import torch
 import torch.nn as nn
 from torch.utils import data
 import torchvision
+from torchvision import datasets, transforms
 from torchvision.transforms import ToTensor
 import matplotlib.pyplot as plt
+from matplotlib_inline import backend_inline
 import numpy as np
 from PIL import Image
 import glob
 import os
 import zipfile 
 import time
+import collections
+import inspect
+from IPython import display
+
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -53,9 +59,9 @@ def train_epoch(net,dataloader,lr=0.01,optimizer=None,loss_fn = nn.NLLLoss()):
         loss.backward()
         optimizer.step()
         total_loss+=loss
-        _,predicted = torch.max(out,1)
+        predicted = out.argmax(dim = 1)
         acc+=(predicted==lbls).sum()
-        count+=len(labels)
+        count+=labels.numel()
     return total_loss.item()/count, acc.item()/count
 
 def validate(net, dataloader,loss_fn=nn.NLLLoss()):
@@ -66,9 +72,9 @@ def validate(net, dataloader,loss_fn=nn.NLLLoss()):
             lbls = labels.to(default_device)
             out = net(features.to(default_device))
             loss += loss_fn(out,lbls) 
-            pred = torch.max(out,1)[1]
+            pred = out.argmax(dim = 1)
             acc += (pred==lbls).sum()
-            count += len(labels)
+            count += labels.numel()
     return loss.item()/count, acc.item()/count
 
 def train(net,train_loader,test_loader,optimizer=None,lr=0.01,epochs=10,loss_fn=nn.NLLLoss()):
@@ -269,6 +275,83 @@ class Timer:
         """Return the accumulated time."""
         return np.array(self.times).cumsum().tolist()
 
+# Animator
+def use_svg_display():
+    """Use the svg format to display a plot in Jupyter."""
+    backend_inline.set_matplotlib_formats('svg')
+
+def set_figsize(figsize=(3.5, 2.5)):
+    """Set the figure size for matplotlib."""
+    use_svg_display()
+    plt.rcParams['figure.figsize'] = figsize
+
+def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
+    """Set the axes for matplotlib."""
+    axes.set_xlabel(xlabel), axes.set_ylabel(ylabel)
+    axes.set_xscale(xscale), axes.set_yscale(yscale)
+    axes.set_xlim(xlim), axes.set_ylim(ylim)
+    if legend:
+        axes.legend(legend)
+    axes.grid()
+    
+class Animator:
+    """For ploting data in animation."""
+    def __init__(self, xlabel = None, ylabel = None, legend = None, xlim = None,
+                 ylim = None, xscale = 'linear', yscale = 'linear',
+                 fmts = ('-', 'm--', 'g-.', 'r:'), nrows = 1, ncols = 1,
+                 figsize = (3.5, 2.5)):
+        # Incrementally plot multiple lines
+        if legend is None:
+            legend = []
+        use_svg_display()
+        self.fig, self.axes = plt.subplots(nrows, ncols, figsize = figsize)
+        if nrows*ncols == 1:
+            self.axes = [self.axes,]
+        # Use a lambda function to capture arguments
+        self.config_axes = lambda: set_axes(
+            self.axes[0], xlabel, ylabel, xlim, ylim, xscale, yscale, legend   
+        )
+        self.X, self.Y, self.fmts = None, None, fmts
+
+    def add(self, x, y):
+        # Add multiple data points into the figure
+        if not hasattr(y, '__len__'):
+            y = [y]
+        n = len(y)
+        if not hasattr(x, '__len__'):
+            x = [x]*n
+        if not self.X:
+            self.X = [[] for _ in range(n)]
+        if not self.Y:
+            self.Y = [[] for _ in range(n)]
+        for i, (a, b) in enumerate(zip(x, y)):
+            if a is not None and b is not None:
+                self.X[i].append(a)
+                self.Y[i].append(b)
+        self.axes[0].cla()
+        for x, y, fmt in zip(self.X, self.Y, self.fmts):
+            self.axes[0].plot(x, y, fmt)
+        self.config_axes()
+        display.display(self.fig)
+        display.clear_output(wait = True)
+        
+        
+class Accumulator: #@save
+    """For accumulating sums over `n` variables."""
+    def __init__(self, n):
+        self.data = [0.0] * n
+        
+    def add(self, *args):
+        self.data = [a + float(b) for a, b in zip(self.data, args)]
+
+    def reset(self):
+        self.data = [0.0] * len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
+
+
+
 # Test multiple GPUs training
 def train_mul(net,train_loader,test_loader,optimizer=None,lr=0.01,epochs=10,loss_fn=nn.NLLLoss(), devices = try_all_gpus()):
     optimizer = optimizer or torch.optim.Adam(net.parameters(),lr=lr)
@@ -288,10 +371,14 @@ def train_mul(net,train_loader,test_loader,optimizer=None,lr=0.01,epochs=10,loss
     return res
 
 
-
-
-
-
+# download online data
+# !pip -q install opendatasets
+# import opendatasets as od
+def download_data(src, data_dir = None):
+    if data_dir:
+        od.download(src, data_dir = data_dir)
+    else:
+        od.download(src)
 
 
 
@@ -536,4 +623,97 @@ def display_anchors(img, fmap_w, fmap_h, s):
     show_bboxes(plt.imshow(img).axes,
                     anchors[0] * bbox_scale)
     
+# VOC dataset
+def read_voc_images(voc_dir, is_train = True):
+    """Read all VOC feature and label images. """
+    txt_fname = os.path.join(voc_dir, 'ImageSets', 'Segmentation','train.txt' if is_train else 'val.txt')
+    mode = torchvision.io.image.ImageReadMode.RGB
+    with open(txt_fname, 'r') as f:
+        images = f.read().split()
+    features, labels = [], []
+    for i, fname in enumerate(images):
+        features.append(torchvision.io.read_image(os.path.join(
+            voc_dir, 'JPEGImages', f'{fname}.jpg'
+        )))
+        labels.append(torchvision.io.read_image(os.path.join(
+            voc_dir, 'SegmentationClass', f'{fname}.png'
+        ), mode))
+
+    return features, labels
+
+VOC_COLORMAP = [[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
+                [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
+                [64, 0, 0], [192, 0, 0], [64, 128, 0], [192, 128, 0],
+                [64, 0, 128], [192, 0, 128], [64, 128, 128], [192, 128, 128],
+                [0, 64, 0], [128, 64, 0], [0, 192, 0], [128, 192, 0],
+                [0, 64, 128]]
+
+VOC_CLASSES = ['background', 'aeroplane', 'bicycle', 'bird', 'boat',
+                'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
+                'diningtable', 'dog', 'horse', 'motorbike', 'person',
+                'potted plant', 'sheep', 'sofa', 'train', 'tv/monitor']
+
+def voc_colormap2label():
+    """Build the mapping from RGB to class indices for VOC labels."""
+    colormap2label = torch.zeros(256 ** 3, dtype=torch.long)
+    for i, colormap in enumerate(VOC_COLORMAP):
+        colormap2label[
+            (colormap[0] * 256 + colormap[1]) * 256 + colormap[2]] = i
+    return colormap2label
+
+def voc_label_indices(colormap, colormap2label):
+    """Map any RGB values in VOC labels to their class indices."""
+    colormap = colormap.permute(1, 2, 0).numpy().astype('int32')
+    idx = ((colormap[:, :, 0] * 256 + colormap[:, :, 1]) * 256
+            + colormap[:, :, 2])
+    return colormap2label[idx]
+
+def voc_rand_crop(feature, label, height, width):
+    """Randomly crop both feature and label images."""
+    rect = transforms.RandomCrop.get_params(
+        feature, (height, width)
+    )
+    feature = transforms.functional.crop(feature, *rect)
+    label = transforms.functional.crop(label, *rect)
+    return feature, label
+
+class VOCSegDataset(torch.utils.data.Dataset):
+    """A customized dataset to load the VOC dataset."""
+    def __init__(self, is_train, crop_size, voc_dir):
+        self.transform = transforms.Normalize(
+            mean = [0.485, 0.456, 0.406],
+            std = [0.229, 0.224, 0.225]
+        )
+        self.crop_size = crop_size
+        features, labels = read_voc_images(voc_dir, is_train = is_train)
+        self.features = [self.normalize_image(feature) for feature in self.filter(features)]
+        self.labels = self.filter(labels)
+        self.colormap2label = voc_colormap2label()
+        print('read ' + str(len(self.features)) + ' examples')
+
+    def normalize_image(self, img):
+        return self.transform(img.float()/255)
+
+    def filter(self, imgs):
+        return [img for img in imgs if (
+            img.shape[1] >= self.crop_size[0] and
+            img.shape[2] >= self.crop_size[1]
+        )]
+
+    def __getitem__(self, idx):
+        feature, label = voc_rand_crop(self.features[idx], self.labels[idx],
+                                       *self.crop_size)
+        return (feature, voc_label_indices(label, self.colormap2label))
     
+    def __len__(self):
+        return len(self.features)
+
+def load_data_voc(voc_dir, batch_size, crop_size):
+    train_iter = torch.utils.data.DataLoader(VOCSegDataset(True, crop_size, voc_dir), batch_size, shuffle = True, 
+                                         drop_last = True,
+                                         pin_memory = True)
+    test_iter = torch.utils.data.DataLoader(VOCSegDataset(False, crop_size, voc_dir), batch_size, shuffle = False,
+                                        drop_last = True,
+                                        pin_memory = True)
+    return train_iter, test_iter
+
