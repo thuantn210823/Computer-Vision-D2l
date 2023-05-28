@@ -1,0 +1,7 @@
+Link Colab
+Lec6_Lab01_unet_simulated: https://colab.research.google.com/drive/1T1ZLyOMGCfJUICKlHmLuh4lUf_Dpf8Sn
+
+Lec6_Lab02_RCNN: https://colab.research.google.com/drive/1mQConE3o9w1pE5oGlgpPDiUyNDo0nQ4U
+
+Lec6_Lab03_FastRCNN:
+https://colab.research.google.com/drive/1nzovYYrWy68Dv_3ENcsEabqLWI7iMoxI
